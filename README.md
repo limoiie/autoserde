@@ -1,5 +1,8 @@
 # AutoSerde
 
+[![AutoSerde unit tests](https://github.com/limoiie/autoserde/actions/workflows/python-package.yml/badge.svg?branch=master)](https://github.com/limoiie/autoserde/actions?branch=master)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/b5df12ffde7f4d37a8773a3004d22cc5)](https://www.codacy.com/gh/limoiie/autoserde/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=limoiie/autoserde&amp;utm_campaign=Badge_Grade)
+
 A lightweight non-invasive framework for serialization/deserialization.
 
 AutoSerde relies on [AutoDict](https://github.com/limoiie/autodict.git) to
