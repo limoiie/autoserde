@@ -1,4 +1,5 @@
 import os
+import pathlib
 import tempfile
 from collections import namedtuple
 from typing import List
@@ -309,16 +310,13 @@ class TestAnnotate:
     def test_serialize_to_path_like(self, tmp_filepath, case: good_case):
         AutoSerde.serialize(case.obj, tmp_filepath, fmt=case.fmt,
                             with_cls=case.with_cls)
-
-        with open(tmp_filepath, 'r') as file:
-            serialized_a = file.read()
+        serialized_a = tmp_filepath.read_text()
 
         assert serialized_a == case.serialized
 
     @pytest.mark.parametrize('case', annotator_good_cases(), ids=case_name)
     def test_deserialize_to_path_like(self, tmp_filepath, case: good_case):
-        with open(tmp_filepath, 'w+') as tmp:
-            tmp.write(case.serialized)
+        tmp_filepath.write_text(case.serialized)
 
         cls = type(case.obj) if not case.with_cls else None
         out_a = AutoSerde.deserialize(tmp_filepath, cls=cls, fmt=case.fmt)
@@ -329,17 +327,14 @@ class TestAnnotate:
     def test_serialize_to_path_like_by_infer_fmt(self, tmp_json_filepath, case):
         AutoSerde.serialize(case.obj, tmp_json_filepath, fmt=None,
                             with_cls=case.with_cls)
-
-        with open(tmp_json_filepath, 'r') as file:
-            serialized_a = file.read()
+        serialized_a = tmp_json_filepath.read_text()
 
         assert serialized_a == case.serialized
 
     @pytest.mark.parametrize('case', annotator_good_cases(), ids=case_name)
     def test_deserialize_to_path_like_by_infer_fmt(self, tmp_json_filepath,
                                                    case: good_case):
-        with open(tmp_json_filepath, 'w+') as tmp:
-            tmp.write(case.serialized)
+        tmp_json_filepath.write_text(case.serialized)
 
         cls = type(case.obj) if not case.with_cls else None
         out_a = AutoSerde.deserialize(tmp_json_filepath, cls=cls, fmt=None)
@@ -374,14 +369,14 @@ class TestDerive:
 @pytest.fixture(scope='function')
 def tmp_json_filepath(tmp_path):
     path = tempfile.mktemp(dir=tmp_path, suffix='.json')
-    yield path
+    yield pathlib.Path(path)
     os.path.exists(path) and os.remove(path)
 
 
 @pytest.fixture(scope='function')
 def tmp_filepath(tmp_path):
     path = tempfile.mktemp(dir=tmp_path)
-    yield path
+    yield pathlib.Path(path)
     os.path.exists(path) and os.remove(path)
 
 
