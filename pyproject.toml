@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "autoserde"
+dynamic = ["version"]
+authors = [
+    { name = "limo", email = "limo.iie4@gmail.com" }
+]
+description = "A lightweight framework for serialization and deserialization."
+readme = "README.md"
+requires-python = ">=3.6"
+keywords = ["dev", "utils", "serialize", "deserialize"]
+license = { file = "LICENSE" }
+classifiers = [
+    'Development Status :: 2 - Pre-Alpha',
+    'Intended Audience :: Developers',
+    'Topic :: Software Development :: Build Tools',
+    'License :: OSI Approved :: MIT License',
+    'Operating System :: OS Independent',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.6',
+    'Programming Language :: Python :: 3.7',
+    'Programming Language :: Python :: 3.8',
+    'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
+]
+dependencies = [
+    "autodict @ git+https://github.com/limoiie/autodict.git@v0.0.4",
+]
+
+[project.optional-dependencies]
+tests = ["pytest"]
+
+[tool.setuptools_scm]
