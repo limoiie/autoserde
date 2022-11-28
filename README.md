@@ -117,3 +117,38 @@ with open('/path/to/x.json', 'w+') as file:
     student_serialized = AutoSerde.serialize(student, fp=file)
     student_deserialized = AutoSerde.deserialize(fp=file, cls=Student)
 ```
+
+### A complex mixin example
+
+```python
+import dataclasses
+from typing import List
+
+from autoserde import serdeable, Serdeable
+
+
+@serdeable
+@dataclasses.dataclass
+class Student:
+    name: str
+    age: int
+
+
+@dataclasses.dataclass
+class Department(Serdeable):
+    students: List[Student]
+    location: str
+
+
+department = Department([
+    Student(name='limo', age=90)
+], 'The Earth')
+
+fmt = 'json'
+department_serialized = department.serialize(fmt=fmt, with_cls=False)
+print(department_serialized)
+# Output: {"students": [{"name": "limo", "age": 90}], "location": "The Earth"}
+
+department_deserialized = Department.deserialize(department_serialized, fmt=fmt)
+assert department == department_deserialized
+```
