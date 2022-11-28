@@ -32,6 +32,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-tests = ["pytest"]
+tests = ["pytest", "pyyaml"]
+yaml = ["pyyaml"]
 
 [tool.setuptools_scm]
