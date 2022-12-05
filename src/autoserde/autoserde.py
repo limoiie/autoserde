@@ -1,7 +1,7 @@
 import io
 import os
 import pathlib
-from typing import Any, IO, Optional, Type, TypeVar
+from typing import Any, IO, Optional, Type, TypeVar, Union
 
 import autodict
 from autodict import AutoDict
@@ -36,7 +36,7 @@ class Serdeable:
     def __init_subclass__(cls, **kwargs):
         autodict.dictable(cls, **kwargs)
 
-    def serialize(self, fp: Optional[IO[str] or os.PathLike or str] = None,
+    def serialize(self, fp: Union[IO[str], os.PathLike, str, None] = None,
                   fmt: Optional[str] = None, with_cls: bool = True,
                   close_fp: bool = False, **kwargs):
         """
@@ -60,7 +60,7 @@ class Serdeable:
                                    close_fp=close_fp, **kwargs)
 
     @classmethod
-    def deserialize(cls, fp: IO[str] or os.PathLike or str or bytes,
+    def deserialize(cls, fp: Union[IO[str], os.PathLike, str, bytes],
                     fmt: Optional[str] = None, close_fp: bool = False,
                     **kwargs):
         """
@@ -88,7 +88,7 @@ class AutoSerde:
     """
 
     @staticmethod
-    def serialize(obj: Any, fp: Optional[IO[str] or os.PathLike or str] = None,
+    def serialize(obj: Any, fp: Union[IO[str], os.PathLike, str, None] = None,
                   fmt: Optional[str] = None, with_cls: bool = True,
                   close_fp: bool = False, **kwargs):
         """
@@ -149,7 +149,7 @@ class AutoSerde:
                 fp.close()
 
     @staticmethod
-    def deserialize(fp: IO[str] or os.PathLike or str,
+    def deserialize(fp: Union[IO[str], os.PathLike, str],
                     cls: Type[T] = None, fmt: Optional[str] = None,
                     close_fp: bool = False, **kwargs) -> T:
         """
