@@ -17,7 +17,6 @@ except _importlib_metadata.PackageNotFoundError:
 from autodict import dictable, from_dictable, to_dictable
 
 from .autoserde import AutoSerde, Serdeable
-from .errors import NotDeserializable, NotSerializable
 from .formats.base import SerdeFormat
 
 serdeable = dictable
