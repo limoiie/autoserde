@@ -123,34 +123,34 @@ class DeriveNestedSerdeable(Serdeable):
             self.count == other.count
 
 
-good_case = namedtuple('GC', 'obj,fmt,serialized,with_cls,name')
+GoodCase = namedtuple('GC', 'obj,fmt,serialized,with_cls,name')
 
-bad_ser_case = namedtuple('BSC', 'obj,fmt,exc,raises,name')
+BadSerCase = namedtuple('BSC', 'obj,fmt,exc,raises,name')
 
-bad_de_case = namedtuple('BDC', 'serialized,fmt,exc,raises,name')
+BadDeCase = namedtuple('BDC', 'serialized,fmt,exc,raises,name')
 
 
 def case_name(case):
     return case.name
 
 
-def annotator_good_cases() -> List[good_case]:
+def annotator_good_cases() -> List[GoodCase]:
     return [
-        good_case(
+        GoodCase(
             name='embedded with class info',
             obj=Normal(str_value='limo', int_value=10),
             fmt='json',
             serialized=r'{"str_value": "limo", "int_value": 10, "@": "Normal"}',
             with_cls=True,
         ),
-        good_case(
+        GoodCase(
             name='without embedding class info',
             obj=Normal(str_value='limo', int_value=10),
             fmt='json',
             serialized=r'{"str_value": "limo", "int_value": 10}',
             with_cls=False,
         ),
-        good_case(
+        GoodCase(
             name='nested serializable embedded with class info',
             obj=NestedSerdeable(a=Normal(str_value='limo', int_value=10),
                                 count=20),
@@ -161,23 +161,23 @@ def annotator_good_cases() -> List[good_case]:
     ]
 
 
-def annotator_bad_ser_cases() -> List[bad_ser_case]:
+def annotator_bad_ser_cases() -> List[BadSerCase]:
     return [
-        bad_ser_case(
+        BadSerCase(
             name='not serializable',
             obj=Unregistered(str_value='limo', int_value=10),
             fmt='json',
             exc=NotSerializable,
             raises=dict(match=r'.*Unregistered.*serializable.*'),
         ),
-        bad_ser_case(
+        BadSerCase(
             name='non-serializable partially deserializable',
             obj=OnlyDeserializable(str_value='limo', int_value=10),
             fmt='json',
             exc=NotSerializable,
             raises=dict(match=r'.*OnlyDeserializable.*serializable.*'),
         ),
-        bad_ser_case(
+        BadSerCase(
             name='serializable has a non-serializable field',
             obj=NestedUnSerdeable(
                 a=Unregistered(str_value='limo', int_value=10), count=20),
@@ -185,7 +185,7 @@ def annotator_bad_ser_cases() -> List[bad_ser_case]:
             exc=NotSerializable,
             raises=dict(match=r'.*Unregistered.*serializable.*'),
         ),
-        bad_ser_case(
+        BadSerCase(
             name='non-serializable has a serializable field',
             obj=UnSerdeableNested(a=Normal(str_value='limo', int_value=10),
                                   count=20),
@@ -196,30 +196,30 @@ def annotator_bad_ser_cases() -> List[bad_ser_case]:
     ]
 
 
-def annotator_bad_de_cases() -> List[bad_de_case]:
+def annotator_bad_de_cases() -> List[BadDeCase]:
     return [
-        bad_de_case(
+        BadDeCase(
             name='not deserializable',
             serialized=r'{"str_value": "limo", "int_value": 10, "@": "Unregistered"}',
             fmt='json',
             exc=NotDeserializable,
             raises=dict(match=r'.*Unregistered.*deserializable.*'),
         ),
-        bad_de_case(
+        BadDeCase(
             name='non-deserializable partially serializable',
             serialized=r'{"str_value": "limo", "int_value": 10, "@": "Unregistered"}',
             fmt='json',
             exc=NotDeserializable,
             raises=dict(match=r'.*Unregistered.*deserializable.*'),
         ),
-        bad_de_case(
+        BadDeCase(
             name='deserializable has a non-deserializable field',
             serialized=r'{"a": {"str_value": "limo", "int_value": 10, "@": "Unregistered"}, "count": 20, "@": "NestedUnSerdeable"}',
             fmt='json',
             exc=NotDeserializable,
             raises=dict(match=r'.*Unregistered.*deserializable.*'),
         ),
-        bad_de_case(
+        BadDeCase(
             name='non-deserializable has a deserializable field',
             serialized=r'{"a": {"str_value": "limo", "int_value": 10, "@": "Normal"}, "count": 20, "@": "UnSerdeableNested"}',
             fmt='json',
@@ -229,23 +229,23 @@ def annotator_bad_de_cases() -> List[bad_de_case]:
     ]
 
 
-def derive_good_cases() -> List[good_case]:
+def derive_good_cases() -> List[GoodCase]:
     return [
-        good_case(
+        GoodCase(
             name='embedded with class info',
             obj=DeriveSerdeable(str_value='limo', int_value=10),
             fmt='json',
             serialized=r'{"str_value": "limo", "int_value": 10, "@": "DeriveSerdeable"}',
             with_cls=True,
         ),
-        good_case(
+        GoodCase(
             name='without embedding class info',
             obj=DeriveSerdeable(str_value='limo', int_value=10),
             fmt='json',
             serialized=r'{"str_value": "limo", "int_value": 10}',
             with_cls=False,
         ),
-        good_case(
+        GoodCase(
             name='nested serializable embedded with class info',
             obj=DeriveNestedSerdeable(
                 c=DeriveSerdeable(str_value='limo', int_value=10), count=20),
@@ -258,20 +258,20 @@ def derive_good_cases() -> List[good_case]:
 
 class TestAnnotate:
     @pytest.mark.parametrize('case', annotator_good_cases(), ids=case_name)
-    def test_serialize_to_string(self, case: good_case):
+    def test_serialize_to_string(self, case: GoodCase):
         serialized_a = AutoSerde.serialize(case.obj, fmt=case.fmt,
                                            with_cls=case.with_cls)
         assert serialized_a == case.serialized
 
     @pytest.mark.parametrize('case', annotator_good_cases(), ids=case_name)
-    def test_deserialize_from_string(self, case: good_case):
+    def test_deserialize_from_string(self, case: GoodCase):
         cls = type(case.obj) if not case.with_cls else None
         a = AutoSerde.deserialize(body=case.serialized, cls=cls, fmt=case.fmt)
 
         assert a == case.obj
 
     @pytest.mark.parametrize('case', annotator_good_cases(), ids=case_name)
-    def test_serialize_to_file_like(self, tmp_file, case: good_case):
+    def test_serialize_to_file_like(self, tmp_file, case: GoodCase):
         AutoSerde.serialize(case.obj, tmp_file, fmt=case.fmt,
                             with_cls=case.with_cls)
 
@@ -281,7 +281,7 @@ class TestAnnotate:
         assert serialized_a == case.serialized
 
     @pytest.mark.parametrize('case', annotator_good_cases(), ids=case_name)
-    def test_deserialize_to_file_like(self, tmp_file, case: good_case):
+    def test_deserialize_to_file_like(self, tmp_file, case: GoodCase):
         tmp_file.write(case.serialized)
         tmp_file.seek(0)
 
@@ -311,7 +311,7 @@ class TestAnnotate:
         assert case.obj == out_a
 
     @pytest.mark.parametrize('case', annotator_good_cases(), ids=case_name)
-    def test_serialize_to_path_like(self, tmp_filepath, case: good_case):
+    def test_serialize_to_path_like(self, tmp_filepath, case: GoodCase):
         AutoSerde.serialize(case.obj, tmp_filepath, fmt=case.fmt,
                             with_cls=case.with_cls)
         serialized_a = tmp_filepath.read_text()
@@ -319,7 +319,7 @@ class TestAnnotate:
         assert serialized_a == case.serialized
 
     @pytest.mark.parametrize('case', annotator_good_cases(), ids=case_name)
-    def test_deserialize_to_path_like(self, tmp_filepath, case: good_case):
+    def test_deserialize_to_path_like(self, tmp_filepath, case: GoodCase):
         tmp_filepath.write_text(case.serialized)
 
         cls = type(case.obj) if not case.with_cls else None
@@ -337,7 +337,7 @@ class TestAnnotate:
 
     @pytest.mark.parametrize('case', annotator_good_cases(), ids=case_name)
     def test_deserialize_to_path_like_by_infer_fmt(self, tmp_json_filepath,
-                                                   case: good_case):
+                                                   case: GoodCase):
         tmp_json_filepath.write_text(case.serialized)
 
         cls = type(case.obj) if not case.with_cls else None
@@ -346,24 +346,24 @@ class TestAnnotate:
         assert case.obj == out_a
 
     @pytest.mark.parametrize('case', annotator_bad_ser_cases(), ids=case_name)
-    def test_serialize_not_serializable(self, case: bad_ser_case):
+    def test_serialize_not_serializable(self, case: BadSerCase):
         with pytest.raises(case.exc, **case.raises):
             AutoSerde.serialize(case.obj, fmt=case.fmt)
 
     @pytest.mark.parametrize('case', annotator_bad_de_cases(), ids=case_name)
-    def test_deserialize_not_deserializable(self, case: bad_de_case):
+    def test_deserialize_not_deserializable(self, case: BadDeCase):
         with pytest.raises(case.exc, **case.raises):
             AutoSerde.deserialize(body=case.serialized, fmt=case.fmt)
 
 
 class TestDerive:
     @pytest.mark.parametrize('case', derive_good_cases(), ids=case_name)
-    def test_serialize_to_string(self, case: good_case):
+    def test_serialize_to_string(self, case: GoodCase):
         serialized_a = case.obj.serialize(fmt=case.fmt, with_cls=case.with_cls)
         assert serialized_a == case.serialized
 
     @pytest.mark.parametrize('case', derive_good_cases(), ids=case_name)
-    def test_deserialize_from_string(self, case: good_case):
+    def test_deserialize_from_string(self, case: GoodCase):
         cls = type(case.obj)
         a = cls.deserialize(body=case.serialized, fmt=case.fmt)
 
