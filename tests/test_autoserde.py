@@ -12,113 +12,113 @@ from autoserde.autoserde import AutoSerde, NotDeserializable, NotSerializable, \
 
 
 @serdeable
-class A:
+class Normal:
     def __init__(self, str_value, int_value):
         self.str_value = str_value
         self.int_value = int_value
 
     def __eq__(self, other):
-        return isinstance(other, A) and \
+        return isinstance(other, Normal) and \
             self.str_value == other.str_value and \
             self.int_value == other.int_value
 
 
-class A2:
+class Unregistered:
     def __init__(self, str_value, int_value):
         self.str_value = str_value
         self.int_value = int_value
 
     def __eq__(self, other):
-        return isinstance(other, A2) and \
+        return isinstance(other, Unregistered) and \
             self.str_value == other.str_value and \
             self.int_value == other.int_value
 
 
 @serializable
-class A3:
+class OnlySerializable:
     def __init__(self, str_value, int_value):
         self.str_value = str_value
         self.int_value = int_value
 
     def __eq__(self, other):
-        return isinstance(other, A4) and \
+        return isinstance(other, OnlyDeserializable) and \
             self.str_value == other.str_value and \
             self.int_value == other.int_value
 
 
 @deserializable
-class A4:
+class OnlyDeserializable:
     def __init__(self, str_value, int_value):
         self.str_value = str_value
         self.int_value = int_value
 
     def __eq__(self, other):
-        return isinstance(other, A4) and \
+        return isinstance(other, OnlyDeserializable) and \
             self.str_value == other.str_value and \
             self.int_value == other.int_value
 
 
 @serdeable
-class B:
-    a: A
+class NestedSerdeable:
+    a: Normal
 
     def __init__(self, a, count):
         self.a = a
         self.count = count
 
     def __eq__(self, other):
-        return isinstance(other, B) and \
+        return isinstance(other, NestedSerdeable) and \
             self.a == other.a and \
             self.count == other.count
 
 
 @serdeable
-class B2:
-    a: A2
+class NestedUnSerdeable:
+    a: Unregistered
 
     def __init__(self, a, count):
         self.a = a
         self.count = count
 
     def __eq__(self, other):
-        return isinstance(other, B2) and \
+        return isinstance(other, NestedUnSerdeable) and \
             self.a == other.a and \
             self.count == other.count
 
 
-class B3:
-    a: A
+class UnSerdeableNested:
+    a: Normal
 
     def __init__(self, a, count):
         self.a = a
         self.count = count
 
     def __eq__(self, other):
-        return isinstance(other, B3) and \
+        return isinstance(other, UnSerdeableNested) and \
             self.a == other.a and \
             self.count == other.count
 
 
-class C(Serdeable):
+class DeriveSerdeable(Serdeable):
     def __init__(self, str_value, int_value):
         self.str_value = str_value
         self.int_value = int_value
 
     def __eq__(self, other):
-        return isinstance(other, C) and \
+        return isinstance(other, DeriveSerdeable) and \
             self.str_value == other.str_value and \
             self.int_value == other.int_value
 
 
-class D(Serdeable):
-    c: C
+class DeriveNestedSerdeable(Serdeable):
+    c: DeriveSerdeable
 
     def __init__(self, c, count):
         self.c = c
         self.count = count
 
     def __eq__(self, other):
-        return isinstance(other, D) and \
+        return isinstance(other, DeriveNestedSerdeable) and \
             self.c == other.c and \
             self.count == other.count
 
@@ -138,23 +138,24 @@ def annotator_good_cases() -> List[good_case]:
     return [
         good_case(
             name='embedded with class info',
-            obj=A(str_value='limo', int_value=10),
+            obj=Normal(str_value='limo', int_value=10),
             fmt='json',
-            serialized=r'{"str_value": "limo", "int_value": 10, "@": "A"}',
+            serialized=r'{"str_value": "limo", "int_value": 10, "@": "Normal"}',
             with_cls=True,
         ),
         good_case(
             name='without embedding class info',
-            obj=A(str_value='limo', int_value=10),
+            obj=Normal(str_value='limo', int_value=10),
             fmt='json',
             serialized=r'{"str_value": "limo", "int_value": 10}',
             with_cls=False,
         ),
         good_case(
             name='nested serializable embedded with class info',
-            obj=B(a=A(str_value='limo', int_value=10), count=20),
+            obj=NestedSerdeable(a=Normal(str_value='limo', int_value=10),
+                                count=20),
             fmt='json',
-            serialized=r'{"a": {"str_value": "limo", "int_value": 10, "@": "A"}, "count": 20, "@": "B"}',
+            serialized=r'{"a": {"str_value": "limo", "int_value": 10, "@": "Normal"}, "count": 20, "@": "NestedSerdeable"}',
             with_cls=True,
         )
     ]
@@ -164,31 +165,33 @@ def annotator_bad_ser_cases() -> List[bad_ser_case]:
     return [
         bad_ser_case(
             name='not serializable',
-            obj=A2(str_value='limo', int_value=10),
+            obj=Unregistered(str_value='limo', int_value=10),
             fmt='json',
             exc=NotSerializable,
-            raises=dict(match=r'.*A2.*serializable.*'),
+            raises=dict(match=r'.*Unregistered.*serializable.*'),
         ),
         bad_ser_case(
             name='non-serializable partially deserializable',
-            obj=A4(str_value='limo', int_value=10),
+            obj=OnlyDeserializable(str_value='limo', int_value=10),
             fmt='json',
             exc=NotSerializable,
-            raises=dict(match=r'.*A4.*serializable.*'),
+            raises=dict(match=r'.*OnlyDeserializable.*serializable.*'),
         ),
         bad_ser_case(
             name='serializable has a non-serializable field',
-            obj=B2(a=A2(str_value='limo', int_value=10), count=20),
+            obj=NestedUnSerdeable(
+                a=Unregistered(str_value='limo', int_value=10), count=20),
             fmt='json',
             exc=NotSerializable,
-            raises=dict(match=r'.*A2.*serializable.*'),
+            raises=dict(match=r'.*Unregistered.*serializable.*'),
         ),
         bad_ser_case(
             name='non-serializable has a serializable field',
-            obj=B3(a=A(str_value='limo', int_value=10), count=20),
+            obj=UnSerdeableNested(a=Normal(str_value='limo', int_value=10),
+                                  count=20),
             fmt='json',
             exc=NotSerializable,
-            raises=dict(match=r'.*B3.*serializable.*'),
+            raises=dict(match=r'.*UnSerdeableNested.*serializable.*'),
         ),
     ]
 
@@ -197,28 +200,28 @@ def annotator_bad_de_cases() -> List[bad_de_case]:
     return [
         bad_de_case(
             name='not deserializable',
-            serialized=r'{"str_value": "limo", "int_value": 10, "@": "A2"}',
+            serialized=r'{"str_value": "limo", "int_value": 10, "@": "Unregistered"}',
             fmt='json',
             exc=NotDeserializable,
-            raises=dict(match=r'.*A2.*deserializable.*'),
+            raises=dict(match=r'.*Unregistered.*deserializable.*'),
         ),
         bad_de_case(
             name='non-deserializable partially serializable',
-            serialized=r'{"str_value": "limo", "int_value": 10, "@": "A2"}',
+            serialized=r'{"str_value": "limo", "int_value": 10, "@": "Unregistered"}',
             fmt='json',
             exc=NotDeserializable,
-            raises=dict(match=r'.*A2.*deserializable.*'),
+            raises=dict(match=r'.*Unregistered.*deserializable.*'),
         ),
         bad_de_case(
             name='deserializable has a non-deserializable field',
-            serialized=r'{"a": {"str_value": "limo", "int_value": 10, "@": "A2"}, "count": 20, "@": "B2"}',
+            serialized=r'{"a": {"str_value": "limo", "int_value": 10, "@": "Unregistered"}, "count": 20, "@": "NestedUnSerdeable"}',
             fmt='json',
             exc=NotDeserializable,
-            raises=dict(match=r'.*A2.*deserializable.*'),
+            raises=dict(match=r'.*Unregistered.*deserializable.*'),
         ),
         bad_de_case(
             name='non-deserializable has a deserializable field',
-            serialized=r'{"a": {"str_value": "limo", "int_value": 10, "@": "A"}, "count": 20, "@": "B3"}',
+            serialized=r'{"a": {"str_value": "limo", "int_value": 10, "@": "Normal"}, "count": 20, "@": "UnSerdeableNested"}',
             fmt='json',
             exc=NotDeserializable,
             raises=dict(),
@@ -230,23 +233,24 @@ def derive_good_cases() -> List[good_case]:
     return [
         good_case(
             name='embedded with class info',
-            obj=C(str_value='limo', int_value=10),
+            obj=DeriveSerdeable(str_value='limo', int_value=10),
             fmt='json',
-            serialized=r'{"str_value": "limo", "int_value": 10, "@": "C"}',
+            serialized=r'{"str_value": "limo", "int_value": 10, "@": "DeriveSerdeable"}',
             with_cls=True,
         ),
         good_case(
             name='without embedding class info',
-            obj=C(str_value='limo', int_value=10),
+            obj=DeriveSerdeable(str_value='limo', int_value=10),
             fmt='json',
             serialized=r'{"str_value": "limo", "int_value": 10}',
             with_cls=False,
         ),
         good_case(
             name='nested serializable embedded with class info',
-            obj=D(c=C(str_value='limo', int_value=10), count=20),
+            obj=DeriveNestedSerdeable(
+                c=DeriveSerdeable(str_value='limo', int_value=10), count=20),
             fmt='json',
-            serialized=r'{"c": {"str_value": "limo", "int_value": 10, "@": "C"}, "count": 20, "@": "D"}',
+            serialized=r'{"c": {"str_value": "limo", "int_value": 10, "@": "DeriveSerdeable"}, "count": 20, "@": "DeriveNestedSerdeable"}',
             with_cls=True,
         )
     ]
