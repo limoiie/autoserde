@@ -2,7 +2,7 @@ import os
 import pathlib
 import tempfile
 from collections import namedtuple
-from typing import List
+from typing import List, Tuple, Union
 
 import pytest
 
@@ -21,6 +21,24 @@ class Normal:
         return isinstance(other, Normal) and \
             self.str_value == other.str_value and \
             self.int_value == other.int_value
+
+
+@serdeable
+class WithGeneric:
+    list_value: List[int]
+    tuple_value: Tuple[int, str]
+    union_value: Union[int, str]
+
+    def __init__(self, list_value, tuple_value, union_value):
+        self.list_value = list_value
+        self.tuple_value = tuple_value
+        self.union_value = union_value
+
+    def __eq__(self, other):
+        return isinstance(other, WithGeneric) and \
+            self.list_value == other.list_value and \
+            self.tuple_value == other.tuple_value and \
+            self.union_value == other.union_value
 
 
 class Unregistered:
@@ -142,6 +160,14 @@ def annotator_good_cases() -> List[GoodCase]:
             fmt='json',
             serialized=r'{"str_value": "limo", "int_value": 10, "@": "Normal"}',
             with_cls=True,
+        ),
+        GoodCase(
+            name='embedded with generic fields',
+            obj=WithGeneric(list_value=[1, 2, 3], tuple_value=(4, '5'),
+                            union_value='6'),
+            fmt='json',
+            serialized=r'{"list_value": [1, 2, 3], "tuple_value": [4, "5"], "union_value": "6"}',
+            with_cls=False,
         ),
         GoodCase(
             name='without embedding class info',
