@@ -127,7 +127,7 @@ with open('/path/to/x.json', 'w+') as file:
 import dataclasses
 from typing import List
 
-from autoserde import serdeable, Serdeable
+from autoserde import Serdeable, serdeable
 
 
 @serdeable
@@ -152,6 +152,7 @@ department_serialized = department.serialize(fmt=fmt, with_cls=False)
 print(department_serialized)
 # Output: {"students": [{"name": "limo", "age": 90}], "location": "The Earth"}
 
-department_deserialized = Department.deserialize(department_serialized, fmt=fmt)
+department_deserialized = Department.deserialize(body=department_serialized,
+                                                 fmt=fmt)
 assert department == department_deserialized
 ```
