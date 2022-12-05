@@ -4,7 +4,7 @@ import pytest
 
 from autoserde import SerdeFormat
 from autoserde.formats import JsonFormat, YamlFormat
-from autoserde.formats.base import UnknownSerdeFormat
+from autoserde.errors import UnknownSerdeFormat
 
 testcase = namedtuple('C', 'ext,exc,expect_type,name')
 

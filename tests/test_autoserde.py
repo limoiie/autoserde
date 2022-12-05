@@ -6,9 +6,9 @@ from typing import List
 
 import pytest
 
-from autoserde import deserializable, serdeable, serializable
-from autoserde.autoserde import AutoSerde, NotDeserializable, NotSerializable, \
-    Serdeable
+from autoserde import NotDeserializable, NotSerializable, deserializable, \
+    serdeable, serializable
+from autoserde.autoserde import AutoSerde, Serdeable
 
 
 @serdeable

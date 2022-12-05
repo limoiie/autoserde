@@ -7,23 +7,11 @@ from autodict.errors import UnableFromDict, UnableToDict
 from flexio import FlexTextIO
 from flexio.flexio import FilePointer
 
-from autoserde.formats.base import SerdeFormat, UnknownSerdeFormat
+from autoserde.errors import NotDeserializable, NotSerializable, \
+    UnknownSerdeFormat
+from autoserde.formats.base import SerdeFormat
 
 T = TypeVar('T')
-
-
-class NotSerializable(Exception):
-    def __init__(self, cls):
-        super(Exception, self).__init__(
-            f'{cls}, please mark it as serializable'
-        )
-
-
-class NotDeserializable(Exception):
-    def __init__(self, cls):
-        super(Exception, self).__init__(
-            f'{cls}, please mark it as deserializable'
-        )
 
 
 class Serdeable:

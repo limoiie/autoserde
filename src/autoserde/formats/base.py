@@ -3,16 +3,7 @@ from typing import Any, IO
 
 from registry import SubclassRegistry
 
-
-class UnknownSerdeFormat(Exception):
-    def __init__(self, fmt):
-        super().__init__()
-        self.msg = (
-            f'no Format registered in `:py:class:SerdeFormat` for format {fmt}.'
-        )
-
-    def __str__(self):
-        return self.msg
+from autoserde.errors import UnknownSerdeFormat
 
 
 class SerdeFormat(SubclassRegistry):
