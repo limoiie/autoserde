@@ -4,7 +4,8 @@ import pathlib
 from typing import Any, IO, Optional, Type, TypeVar
 
 import autodict
-from autodict import AutoDict, UnableFromDict, UnableToDict
+from autodict import AutoDict
+from autodict.errors import UnableFromDict, UnableToDict
 
 from autoserde.formats.base import SerdeFormat
 
