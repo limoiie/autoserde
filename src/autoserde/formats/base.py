@@ -6,9 +6,13 @@ from registry import SubclassRegistry
 
 class UnknownSerdeFormat(Exception):
     def __init__(self, fmt):
-        super().__init__(
-            f' - {fmt}, please register a `Format` to SerdeFormat for it.'
+        super().__init__()
+        self.msg = (
+            f'no Format registered in `:py:class:SerdeFormat` for format {fmt}.'
         )
+
+    def __str__(self):
+        return self.msg
 
 
 class SerdeFormat(SubclassRegistry):

@@ -266,7 +266,7 @@ class TestAnnotate:
     @pytest.mark.parametrize('case', annotator_good_cases(), ids=case_name)
     def test_deserialize_from_string(self, case: good_case):
         cls = type(case.obj) if not case.with_cls else None
-        a = AutoSerde.deserialize(case.serialized, cls=cls, fmt=case.fmt)
+        a = AutoSerde.deserialize(body=case.serialized, cls=cls, fmt=case.fmt)
 
         assert a == case.obj
 
@@ -353,7 +353,7 @@ class TestAnnotate:
     @pytest.mark.parametrize('case', annotator_bad_de_cases(), ids=case_name)
     def test_deserialize_not_deserializable(self, case: bad_de_case):
         with pytest.raises(case.exc, **case.raises):
-            AutoSerde.deserialize(case.serialized, fmt=case.fmt)
+            AutoSerde.deserialize(body=case.serialized, fmt=case.fmt)
 
 
 class TestDerive:
@@ -365,7 +365,7 @@ class TestDerive:
     @pytest.mark.parametrize('case', derive_good_cases(), ids=case_name)
     def test_deserialize_from_string(self, case: good_case):
         cls = type(case.obj)
-        a = cls.deserialize(case.serialized, fmt=case.fmt)
+        a = cls.deserialize(body=case.serialized, fmt=case.fmt)
 
         assert a == case.obj
 
