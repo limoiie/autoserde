@@ -28,7 +28,7 @@ classifiers = [
     'Programming Language :: Python :: 3.11',
 ]
 dependencies = [
-    "autodict @ git+https://github.com/limoiie/autodict.git@v0.0.4",
+    "autodict @ git+https://github.com/limoiie/autodict.git@v0.0.5",
 ]
 
 [project.optional-dependencies]
