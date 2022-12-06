@@ -10,6 +10,7 @@ from autodict import Options
 from autoserde import deserializable, serdeable, serializable
 from autoserde.autoserde import AutoSerde, Serdeable
 from autoserde.errors import NotDeserializable, NotSerializable
+from conftest import Raises
 
 
 @serdeable
@@ -144,9 +145,9 @@ class DeriveNestedSerdeable(Serdeable):
 
 GoodCase = namedtuple('GC', 'obj,fmt,serialized,opts,name')
 
-BadSerCase = namedtuple('BSC', 'obj,fmt,exc,raises,name')
+BadSerCase = namedtuple('BSC', 'obj,fmt,raises,name')
 
-BadDeCase = namedtuple('BDC', 'serialized,fmt,exc,raises,name')
+BadDeCase = namedtuple('BDC', 'serialized,fmt,raises,name')
 
 
 def case_name(case):
@@ -194,31 +195,34 @@ def annotator_bad_ser_cases() -> List[BadSerCase]:
             name='not serializable',
             obj=Unregistered(str_value='limo', int_value=10),
             fmt='json',
-            exc=NotSerializable,
-            raises=dict(match=r'.*Unregistered.*serializable.*'),
+            raises=Raises(
+                exc=NotSerializable,
+                kwargs=dict(match=r'.*Unregistered.*serializable.*')),
         ),
         BadSerCase(
             name='non-serializable partially deserializable',
             obj=OnlyDeserializable(str_value='limo', int_value=10),
             fmt='json',
-            exc=NotSerializable,
-            raises=dict(match=r'.*OnlyDeserializable.*serializable.*'),
+            raises=Raises(exc=NotSerializable,
+                          kwargs=dict(
+                              match=r'.*OnlyDeserializable.*serializable.*')),
         ),
         BadSerCase(
             name='serializable has a non-serializable field',
             obj=NestedUnSerdeable(
                 a=Unregistered(str_value='limo', int_value=10), count=20),
             fmt='json',
-            exc=NotSerializable,
-            raises=dict(match=r'.*Unregistered.*serializable.*'),
+            raises=Raises(exc=NotSerializable,
+                          kwargs=dict(match=r'.*Unregistered.*serializable.*')),
         ),
         BadSerCase(
             name='non-serializable has a serializable field',
             obj=UnSerdeableNested(a=Normal(str_value='limo', int_value=10),
                                   count=20),
             fmt='json',
-            exc=NotSerializable,
-            raises=dict(match=r'.*UnSerdeableNested.*serializable.*'),
+            raises=Raises(exc=NotSerializable,
+                          kwargs=dict(
+                              match=r'.*UnSerdeableNested.*serializable.*')),
         ),
     ]
 
@@ -229,29 +233,33 @@ def annotator_bad_de_cases() -> List[BadDeCase]:
             name='not deserializable',
             serialized=r'{"str_value": "limo", "int_value": 10, "@": "Unregistered"}',
             fmt='json',
-            exc=NotDeserializable,
-            raises=dict(match=r'.*Unregistered.*deserializable.*'),
+            raises=Raises(exc=NotDeserializable,
+                          kwargs=dict(
+                              match=r'.*Unregistered.*deserializable.*'),
+                          ),
         ),
         BadDeCase(
             name='non-deserializable partially serializable',
             serialized=r'{"str_value": "limo", "int_value": 10, "@": "Unregistered"}',
             fmt='json',
-            exc=NotDeserializable,
-            raises=dict(match=r'.*Unregistered.*deserializable.*'),
+            raises=Raises(exc=NotDeserializable,
+                          kwargs=dict(
+                              match=r'.*Unregistered.*deserializable.*')),
         ),
         BadDeCase(
             name='deserializable has a non-deserializable field',
             serialized=r'{"a": {"str_value": "limo", "int_value": 10, "@": "Unregistered"}, "count": 20, "@": "NestedUnSerdeable"}',
             fmt='json',
-            exc=NotDeserializable,
-            raises=dict(match=r'.*Unregistered.*deserializable.*'),
+            raises=Raises(exc=NotDeserializable,
+                          kwargs=dict(
+                              match=r'.*Unregistered.*deserializable.*')),
         ),
         BadDeCase(
             name='non-deserializable has a deserializable field',
             serialized=r'{"a": {"str_value": "limo", "int_value": 10, "@": "Normal"}, "count": 20, "@": "UnSerdeableNested"}',
             fmt='json',
-            exc=NotDeserializable,
-            raises=dict(),
+            raises=Raises(exc=NotDeserializable,
+                          kwargs=dict()),
         ),
     ]
 
@@ -379,12 +387,12 @@ class TestAnnotate:
 
     @pytest.mark.parametrize('case', annotator_bad_ser_cases(), ids=case_name)
     def test_serialize_not_serializable(self, case: BadSerCase):
-        with pytest.raises(case.exc, **case.raises):
+        with pytest.raises(case.raises.exc, **case.raises.kwargs):
             AutoSerde.serialize(case.obj, fmt=case.fmt)
 
     @pytest.mark.parametrize('case', annotator_bad_de_cases(), ids=case_name)
     def test_deserialize_not_deserializable(self, case: BadDeCase):
-        with pytest.raises(case.exc, **case.raises):
+        with pytest.raises(case.raises.exc, **case.raises.kwargs):
             AutoSerde.deserialize(body=case.serialized, fmt=case.fmt)
 
 
