@@ -5,6 +5,7 @@ from collections import namedtuple
 from typing import List, Tuple, Union
 
 import pytest
+from autodict import Options
 
 from autoserde import deserializable, serdeable, serializable
 from autoserde.autoserde import AutoSerde, Serdeable
@@ -141,7 +142,7 @@ class DeriveNestedSerdeable(Serdeable):
             self.count == other.count
 
 
-GoodCase = namedtuple('GC', 'obj,fmt,serialized,with_cls,name')
+GoodCase = namedtuple('GC', 'obj,fmt,serialized,opts,name')
 
 BadSerCase = namedtuple('BSC', 'obj,fmt,exc,raises,name')
 
@@ -159,7 +160,7 @@ def annotator_good_cases() -> List[GoodCase]:
             obj=Normal(str_value='limo', int_value=10),
             fmt='json',
             serialized=r'{"str_value": "limo", "int_value": 10, "@": "Normal"}',
-            with_cls=True,
+            opts=Options(with_cls=True),
         ),
         GoodCase(
             name='embedded with generic fields',
@@ -167,14 +168,14 @@ def annotator_good_cases() -> List[GoodCase]:
                             union_value='6'),
             fmt='json',
             serialized=r'{"list_value": [1, 2, 3], "tuple_value": [4, "5"], "union_value": "6"}',
-            with_cls=False,
+            opts=Options(with_cls=False),
         ),
         GoodCase(
             name='without embedding class info',
             obj=Normal(str_value='limo', int_value=10),
             fmt='json',
             serialized=r'{"str_value": "limo", "int_value": 10}',
-            with_cls=False,
+            opts=Options(with_cls=False),
         ),
         GoodCase(
             name='nested serializable embedded with class info',
@@ -182,7 +183,7 @@ def annotator_good_cases() -> List[GoodCase]:
                                 count=20),
             fmt='json',
             serialized=r'{"a": {"str_value": "limo", "int_value": 10, "@": "Normal"}, "count": 20, "@": "NestedSerdeable"}',
-            with_cls=True,
+            opts=Options(with_cls=True),
         )
     ]
 
@@ -262,14 +263,14 @@ def derive_good_cases() -> List[GoodCase]:
             obj=DeriveSerdeable(str_value='limo', int_value=10),
             fmt='json',
             serialized=r'{"str_value": "limo", "int_value": 10, "@": "DeriveSerdeable"}',
-            with_cls=True,
+            opts=Options(with_cls=True),
         ),
         GoodCase(
             name='without embedding class info',
             obj=DeriveSerdeable(str_value='limo', int_value=10),
             fmt='json',
             serialized=r'{"str_value": "limo", "int_value": 10}',
-            with_cls=False,
+            opts=Options(with_cls=False),
         ),
         GoodCase(
             name='nested serializable embedded with class info',
@@ -277,7 +278,7 @@ def derive_good_cases() -> List[GoodCase]:
                 c=DeriveSerdeable(str_value='limo', int_value=10), count=20),
             fmt='json',
             serialized=r'{"c": {"str_value": "limo", "int_value": 10, "@": "DeriveSerdeable"}, "count": 20, "@": "DeriveNestedSerdeable"}',
-            with_cls=True,
+            opts=Options(with_cls=True),
         )
     ]
 
@@ -286,20 +287,21 @@ class TestAnnotate:
     @pytest.mark.parametrize('case', annotator_good_cases(), ids=case_name)
     def test_serialize_to_string(self, case: GoodCase):
         serialized_a = AutoSerde.serialize(case.obj, fmt=case.fmt,
-                                           with_cls=case.with_cls)
+                                           options=case.opts)
         assert serialized_a == case.serialized
 
     @pytest.mark.parametrize('case', annotator_good_cases(), ids=case_name)
     def test_deserialize_from_string(self, case: GoodCase):
-        cls = type(case.obj) if not case.with_cls else None
-        a = AutoSerde.deserialize(body=case.serialized, cls=cls, fmt=case.fmt)
+        cls = type(case.obj) if not case.opts.with_cls else None
+        a = AutoSerde.deserialize(body=case.serialized, cls=cls, fmt=case.fmt,
+                                  options=case.opts)
 
         assert a == case.obj
 
     @pytest.mark.parametrize('case', annotator_good_cases(), ids=case_name)
     def test_serialize_to_file_like(self, tmp_file, case: GoodCase):
         AutoSerde.serialize(case.obj, tmp_file, fmt=case.fmt,
-                            with_cls=case.with_cls)
+                            options=case.opts)
 
         tmp_file.seek(0)
         serialized_a = tmp_file.read()
@@ -311,15 +313,16 @@ class TestAnnotate:
         tmp_file.write(case.serialized)
         tmp_file.seek(0)
 
-        cls = type(case.obj) if not case.with_cls else None
-        out_a = AutoSerde.deserialize(tmp_file, cls=cls, fmt=case.fmt)
+        cls = type(case.obj) if not case.opts.with_cls else None
+        out_a = AutoSerde.deserialize(tmp_file, cls=cls, fmt=case.fmt,
+                                      options=case.opts)
 
         assert case.obj == out_a
 
     @pytest.mark.parametrize('case', annotator_good_cases(), ids=case_name)
     def test_serialize_to_file_like_by_infer_fmt(self, tmp_json_file, case):
         AutoSerde.serialize(case.obj, tmp_json_file, fmt=None,
-                            with_cls=case.with_cls)
+                            options=case.opts)
 
         tmp_json_file.seek(0)
         serialized_a = tmp_json_file.read()
@@ -331,15 +334,16 @@ class TestAnnotate:
         tmp_json_file.write(case.serialized)
         tmp_json_file.seek(0)
 
-        cls = type(case.obj) if not case.with_cls else None
-        out_a = AutoSerde.deserialize(tmp_json_file, cls=cls, fmt=None)
+        cls = type(case.obj) if not case.opts.with_cls else None
+        out_a = AutoSerde.deserialize(tmp_json_file, cls=cls, fmt=None,
+                                      options=case.opts)
 
         assert case.obj == out_a
 
     @pytest.mark.parametrize('case', annotator_good_cases(), ids=case_name)
     def test_serialize_to_path_like(self, tmp_filepath, case: GoodCase):
         AutoSerde.serialize(case.obj, tmp_filepath, fmt=case.fmt,
-                            with_cls=case.with_cls)
+                            options=case.opts)
         serialized_a = tmp_filepath.read_text()
 
         assert serialized_a == case.serialized
@@ -348,15 +352,16 @@ class TestAnnotate:
     def test_deserialize_to_path_like(self, tmp_filepath, case: GoodCase):
         tmp_filepath.write_text(case.serialized)
 
-        cls = type(case.obj) if not case.with_cls else None
-        out_a = AutoSerde.deserialize(tmp_filepath, cls=cls, fmt=case.fmt)
+        cls = type(case.obj) if not case.opts.with_cls else None
+        out_a = AutoSerde.deserialize(tmp_filepath, cls=cls, fmt=case.fmt,
+                                      options=case.opts)
 
         assert case.obj == out_a
 
     @pytest.mark.parametrize('case', annotator_good_cases(), ids=case_name)
     def test_serialize_to_path_like_by_infer_fmt(self, tmp_json_filepath, case):
         AutoSerde.serialize(case.obj, tmp_json_filepath, fmt=None,
-                            with_cls=case.with_cls)
+                            options=case.opts)
         serialized_a = tmp_json_filepath.read_text()
 
         assert serialized_a == case.serialized
@@ -366,8 +371,9 @@ class TestAnnotate:
                                                    case: GoodCase):
         tmp_json_filepath.write_text(case.serialized)
 
-        cls = type(case.obj) if not case.with_cls else None
-        out_a = AutoSerde.deserialize(tmp_json_filepath, cls=cls, fmt=None)
+        cls = type(case.obj) if not case.opts.with_cls else None
+        out_a = AutoSerde.deserialize(tmp_json_filepath, cls=cls, fmt=None,
+                                      options=case.opts)
 
         assert case.obj == out_a
 
@@ -385,13 +391,14 @@ class TestAnnotate:
 class TestDerive:
     @pytest.mark.parametrize('case', derive_good_cases(), ids=case_name)
     def test_serialize_to_string(self, case: GoodCase):
-        serialized_a = case.obj.serialize(fmt=case.fmt, with_cls=case.with_cls)
+        serialized_a = case.obj.serialize(fmt=case.fmt, options=case.opts)
         assert serialized_a == case.serialized
 
     @pytest.mark.parametrize('case', derive_good_cases(), ids=case_name)
     def test_deserialize_from_string(self, case: GoodCase):
         cls = type(case.obj)
-        a = cls.deserialize(body=case.serialized, fmt=case.fmt)
+        a = cls.deserialize(body=case.serialized, fmt=case.fmt,
+                            options=case.opts)
 
         assert a == case.obj
 

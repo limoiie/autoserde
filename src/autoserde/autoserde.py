@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Any, Optional, Type, TypeVar
 
 import autodict
-from autodict import AutoDict
+from autodict import AutoDict, Options
 from autodict.errors import UnableFromDict, UnableToDict
 from flexio import FlexTextIO
 from flexio.flexio import FilePointer
@@ -25,7 +25,7 @@ class Serdeable:
         autodict.dictable(cls, **kwargs)
 
     def serialize(self, fp: Optional[FilePointer] = None, *,
-                  fmt: Optional[str] = None, with_cls: bool = True,
+                  fmt: Optional[str] = None, options: Optional[Options] = None,
                   close_fp: bool = False, **kwargs):
         """
         Dump obj into target in the specific serialization format.
@@ -34,8 +34,7 @@ class Serdeable:
           serialized bytes directly.
         :param fmt: Target serialization format, can be 'json', 'yaml', etc. If
           `None`, try to infer the format from file extension if there is.
-        :param with_cls: A boolean value indicating if embedding the class into
-          the final serialization or not.
+        :param options: AutoDict options.
         :param close_fp: Close file before return or not. Default as `False`.
         :param kwargs: optional keyword args passing to underlying format lib.
         :return: serialized string.
@@ -44,13 +43,14 @@ class Serdeable:
         :raises UnknownSerdeFormat: when no registered format class for the format
         :raises ValueError: when no format provided and failed to infer it
         """
-        return AutoSerde.serialize(self, fp=fp, fmt=fmt, with_cls=with_cls,
+        return AutoSerde.serialize(self, fp=fp, fmt=fmt, options=options,
                                    close_fp=close_fp, **kwargs)
 
     @classmethod
     def deserialize(cls, fp: Optional[FilePointer] = None, *,
                     body: Optional[str] = None, fmt: Optional[str] = None,
-                    close_fp: bool = False, **kwargs):
+                    options: Optional[Options] = None, close_fp: bool = False,
+                    **kwargs):
         """
         Load obj in the specific deserialization format.
 
@@ -58,6 +58,7 @@ class Serdeable:
         :param body: If fp is `None`, this will be used as the source.
         :param fmt: Target deserialization format, can be 'json', 'yaml', etc.
           If `None`, try to infer the format from file extension if there is.
+        :param options: AutoDict options.
         :param close_fp: Close file before return or not. Default as `False`.
         :param kwargs: optional keyword args passing to underlying format lib.
         :return: the instance deserialized as the given class `cls`.
@@ -67,7 +68,8 @@ class Serdeable:
         :raises ValueError: when no format provided and failed to infer it
         """
         return AutoSerde.deserialize(fp, body=body, cls=cls, fmt=fmt,
-                                     close_fp=close_fp, **kwargs)
+                                     options=options, close_fp=close_fp,
+                                     **kwargs)
 
 
 class AutoSerde:
@@ -77,7 +79,7 @@ class AutoSerde:
 
     @staticmethod
     def serialize(ins: Any, fp: Optional[FilePointer] = None, *,
-                  fmt: Optional[str] = None, with_cls: bool = True,
+                  fmt: Optional[str] = None, options: Optional[Options] = None,
                   close_fp: Optional[bool] = None, **kwargs) -> Optional[str]:
         """
         Dump obj into target in the specific serialization format.
@@ -87,8 +89,7 @@ class AutoSerde:
           serialized bytes directly.
         :param fmt: Target serialization format, can be 'json', 'yaml', etc. If
           `None`, try to infer the format from file extension if there is.
-        :param with_cls: A boolean value indicating if embedding the class into
-          the final serialization or not.
+        :param options: AutoDict options.
         :param close_fp: Close file before return or not. Default as `None`. If
           `None`, the fp will be closed only if it was created inner this call.
         :param kwargs: optional keyword args passing to underlying format lib.
@@ -104,7 +105,7 @@ class AutoSerde:
 
             try:
                 formatter = SerdeFormat.instance_by(fmt)
-                obj = AutoDict.to_dict(ins, with_cls=with_cls)
+                obj = AutoDict.to_dict(ins, options=options)
                 formatter.dump(obj, io_, **kwargs)
 
                 if io_.in_mem:
@@ -126,8 +127,9 @@ class AutoSerde:
     @staticmethod
     def deserialize(fp: Optional[FilePointer] = None, *,
                     body: Optional[str] = None, cls: Type[T] = None,
-                    fmt: Optional[str] = None, close_fp: Optional[bool] = None,
-                    **kwargs) -> T:
+                    fmt: Optional[str] = None,
+                    options: Optional[Options] = None,
+                    close_fp: Optional[bool] = None, **kwargs) -> T:
         """
         Load obj in the specific deserialization format.
 
@@ -135,6 +137,7 @@ class AutoSerde:
           it as the raw serialization sequence directly.
         :param cls: The class that is going to be instantiated against. If
           `None`, try to infer the class from the serialized data.
+        :param options: AutoDict options.
         :param fmt: Target deserialization format, can be 'json', 'yaml', etc.
           If `None`, try to infer the format from file extension if there is.
         :param body: If fp is `None`, this will be used as the source.
@@ -153,7 +156,7 @@ class AutoSerde:
             try:
                 formatter = SerdeFormat.instance_by(fmt)
                 obj = formatter.load(io_, **kwargs)
-                ins = AutoDict.from_dict(obj, cls=cls)
+                ins = AutoDict.from_dict(obj, cls=cls, options=options)
                 return ins
 
             except ModuleNotFoundError as err:

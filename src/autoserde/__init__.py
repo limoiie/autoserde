@@ -1,7 +1,7 @@
 """A lightweight serde framework."""
 
 __all__ = ['serdeable', 'serializable', 'deserializable', 'AutoSerde',
-           'Serdeable', 'SerdeFormat']
+           'Options', 'Serdeable', 'SerdeFormat']
 
 try:
     import importlib.metadata as _importlib_metadata
@@ -14,7 +14,7 @@ try:
 except _importlib_metadata.PackageNotFoundError:
     __version__ = "unknown version"
 
-from autodict import dictable, from_dictable, to_dictable
+from autodict import Options, dictable, from_dictable, to_dictable
 
 from .autoserde import AutoSerde, Serdeable
 from .formats.base import SerdeFormat
