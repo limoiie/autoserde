@@ -29,7 +29,7 @@ classifiers = [
 ]
 dependencies = [
     "autodict @ git+https://github.com/limoiie/autodict.git@v0.0.7",
-    "flexio @ git+https://github.com/limoiie/flexio.git@v0.0.3",
+    "flexio @ git+https://github.com/limoiie/flexio.git@c9372f19",
 ]
 
 [project.optional-dependencies]
