@@ -94,12 +94,13 @@ from autoserde import serdeable, AutoSerde
 class Student:
     def __init__(self, name, age):
         self.name, self.age = name, age
+
     ...
 
 
 student = Student(name='limo', age=90)
-student_serialized = AutoSerde.serialize(student, fp='/path/to/x.json')
-student_deserialized = AutoSerde.deserialize(fp='/path/to/x.json', cls=Student)
+student_serialized = AutoSerde.serialize(student, dst='/path/to/x.json')
+student_deserialized = AutoSerde.deserialize(src='/path/to/x.json', cls=Student)
 ```
 
 ### Serialize/Deserialize into/from file-like
@@ -112,13 +113,14 @@ from autoserde import serdeable, AutoSerde
 class Student:
     def __init__(self, name, age):
         self.name, self.age = name, age
+
     ...
 
 
 student = Student(name='limo', age=90)
 with open('/path/to/x.json', 'w+') as file:
-    student_serialized = AutoSerde.serialize(student, fp=file)
-    student_deserialized = AutoSerde.deserialize(fp=file, cls=Student)
+    student_serialized = AutoSerde.serialize(student, dst=file)
+    student_deserialized = AutoSerde.deserialize(src=file, cls=Student)
 ```
 
 ### A complex mixin example
