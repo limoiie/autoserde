@@ -7,7 +7,10 @@ class YamlFormat(SerdeFormat, exts=['.yaml', '.yml']):
     def dump(self, obj: Any, fp, **kwargs):
         yaml = __import__('yaml')
         with fp.open('wt+') as f:
-            return yaml.dump(obj, f, **kwargs)
+            yaml.dump(obj, f, **kwargs)
+
+            if fp.fp is None:
+                return fp.read_all()
 
     def load(self, fp, **kwargs):
         yaml = __import__('yaml')

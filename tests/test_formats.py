@@ -93,10 +93,8 @@ cases = {
 def test_transform(case: Case):
     fmt = SerdeFormat.instance_by(case.fmt)
 
-    wrap = FlexWrap()
-    fmt.dump(case.obj, wrap)
-
-    serialization = wrap.read_all()
+    serialization = fmt.dump(case.obj, FlexWrap())
     print(f'{fmt}: len={len(serialization)}')
     output = fmt.load(FlexWrap(init=serialization))
+
     assert output == case.obj

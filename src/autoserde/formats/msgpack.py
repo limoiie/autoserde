@@ -6,6 +6,9 @@ from autoserde.formats.base import FlexWrap, SerdeFormat
 class MsgpackFormat(SerdeFormat, exts=['.msgpack']):
     def dump(self, obj: Any, fp: FlexWrap, **kwargs):
         msgpack = __import__('msgpack')
+        if fp.fp is None:
+            return msgpack.dumps(obj, **kwargs)
+
         with fp.open('wb+') as f:
             return msgpack.dump(obj, f, **kwargs)
 

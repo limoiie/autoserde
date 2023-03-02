@@ -6,6 +6,9 @@ from autoserde.formats.base import FlexWrap, SerdeFormat
 
 class JsonFormat(SerdeFormat, exts=['.json']):
     def dump(self, obj: Any, fp: FlexWrap, **kwargs):
+        if fp.fp is None:
+            return json.dumps(obj, **kwargs)
+
         with fp.open('wt+') as f:
             return json.dump(obj, f, **kwargs)
 

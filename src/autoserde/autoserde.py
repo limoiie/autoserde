@@ -110,10 +110,7 @@ class AutoSerde:
         try:
             formatter = SerdeFormat.instance_by(fmt)
             obj = AutoDict.to_dict(ins, options=options)
-            formatter.dump(obj, io_wrap, **kwargs)
-
-            if dst is None:
-                return io_wrap.read_all()
+            return formatter.dump(obj, io_wrap, **kwargs)
 
         except ModuleNotFoundError as err:
             err.msg += f' - required by serialization format {fmt}.'
