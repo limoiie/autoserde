@@ -33,6 +33,8 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+bson = ["bson"]
+msgpack = ["msgpack"]
 tests = ["pytest", "pyyaml"]
 yaml = ["pyyaml"]
 

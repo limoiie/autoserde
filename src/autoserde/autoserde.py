@@ -1,15 +1,13 @@
-from pathlib import Path
 from typing import Any, IO, Optional, Type, TypeVar, Union
 
 import autodict
-import flexio
 from autodict import AutoDict, Options
 from autodict.errors import UnableFromDict, UnableToDict
 from flexio import FilePointer
 
 from autoserde.errors import NotDeserializable, NotSerializable, \
     UnknownSerdeFormat
-from autoserde.formats.base import SerdeFormat
+from autoserde.formats.base import FlexWrap, SerdeFormat
 
 T = TypeVar('T')
 
@@ -24,7 +22,7 @@ class Serdeable:
     def __init_subclass__(cls, **kwargs):
         autodict.dictable(cls, **kwargs)
 
-    def serialize(self, dst: Union[IO[str], FilePointer, None] = None, *,
+    def serialize(self, dst: Union[IO, FilePointer, None] = None, *,
                   fmt: Optional[str] = None, options: Optional[Options] = None,
                   close_io: Optional[bool] = None, **kwargs):
         """
@@ -49,8 +47,9 @@ class Serdeable:
                                    close_io=close_io, **kwargs)
 
     @classmethod
-    def deserialize(cls, src: Union[IO[str], FilePointer, None] = None, *,
-                    body: Optional[str] = None, fmt: Optional[str] = None,
+    def deserialize(cls, src: Union[IO, FilePointer, None] = None, *,
+                    body: Union[str, bytes, None] = None,
+                    fmt: Optional[str] = None,
                     options: Optional[Options] = None,
                     close_io: Optional[bool] = None, **kwargs):
         """
@@ -83,7 +82,7 @@ class AutoSerde:
     """
 
     @staticmethod
-    def serialize(ins: Any, dst: Union[IO[str], FilePointer, None] = None, *,
+    def serialize(ins: Any, dst: Union[IO, FilePointer, None] = None, *,
                   fmt: Optional[str] = None, options: Optional[Options] = None,
                   close_io: Optional[bool] = None, **kwargs) -> Optional[str]:
         """
@@ -105,34 +104,32 @@ class AutoSerde:
         :raises UnknownSerdeFormat: when no registered class for the format
         :raises ValueError: when no format provided and failed to infer it
         """
-        with flexio.flex_open(dst, 'w+', close_io=close_io) as io_:
-            filename = Path(io_.name if isinstance(io_.name, str) else '')
-            fmt = fmt or filename.suffix
+        io_wrap = FlexWrap(fp=dst, close_io=close_io)
+        fmt = fmt or io_wrap.filepath.suffix
 
-            try:
-                formatter = SerdeFormat.instance_by(fmt)
-                obj = AutoDict.to_dict(ins, options=options)
-                formatter.dump(obj, io_, **kwargs)
+        try:
+            formatter = SerdeFormat.instance_by(fmt)
+            obj = AutoDict.to_dict(ins, options=options)
+            formatter.dump(obj, io_wrap, **kwargs)
 
-                if dst is None:
-                    io_.seek(0)
-                    return io_.read()
+            if dst is None:
+                return io_wrap.read_all()
 
-            except ModuleNotFoundError as err:
-                err.msg += f' - required by serialization format {fmt}.'
-                raise err
+        except ModuleNotFoundError as err:
+            err.msg += f' - required by serialization format {fmt}.'
+            raise err
 
-            except UnknownSerdeFormat as err:
-                if not fmt:
-                    err.msg = f'Cannot infer ser format, specify it explicitly.'
-                raise err
+        except UnknownSerdeFormat as err:
+            if not fmt:
+                err.msg = f'Cannot infer ser format, specify it explicitly.'
+            raise err
 
-            except UnableToDict as err:
-                raise NotSerializable(err.args) from err
+        except UnableToDict as err:
+            raise NotSerializable(err.args) from err
 
     @staticmethod
-    def deserialize(src: Union[IO[str], FilePointer, None] = None, *,
-                    body: Optional[str] = None, cls: Type[T] = None,
+    def deserialize(src: Union[IO, FilePointer, None] = None, *,
+                    body: Union[str, bytes, None] = None, cls: Type[T] = None,
                     fmt: Optional[str] = None,
                     options: Optional[Options] = None,
                     close_io: Optional[bool] = None, **kwargs) -> T:
@@ -158,24 +155,23 @@ class AutoSerde:
         :raises UnknownSerdeFormat: when no registered class for the format
         :raises ValueError: when no format provided and failed to infer it
         """
-        with flexio.flex_open(src, 'rt', init=body, close_io=close_io) as io_:
-            filename = Path(io_.name if isinstance(io_.name, str) else '')
-            fmt = fmt or filename.suffix
+        io_wrap = FlexWrap(fp=src, init=body, close_io=close_io)
+        fmt = fmt or io_wrap.filepath.suffix
 
-            try:
-                formatter = SerdeFormat.instance_by(fmt)
-                obj = formatter.load(io_, **kwargs)
-                ins = AutoDict.from_dict(obj, cls=cls, options=options)
-                return ins
+        try:
+            formatter = SerdeFormat.instance_by(fmt)
+            obj = formatter.load(io_wrap, **kwargs)
+            ins = AutoDict.from_dict(obj, cls=cls, options=options)
+            return ins
 
-            except ModuleNotFoundError as err:
-                err.msg += f' - required by deserialization format {fmt}'
-                raise err
+        except ModuleNotFoundError as err:
+            err.msg += f' - required by deserialization format {fmt}'
+            raise err
 
-            except UnknownSerdeFormat as err:
-                if not fmt:
-                    err.msg = f'Cannot infer de format, specify it explicitly.'
-                raise err
+        except UnknownSerdeFormat as err:
+            if not fmt:
+                err.msg = f'Cannot infer de format, specify it explicitly.'
+            raise err
 
-            except UnableFromDict as err:
-                raise NotDeserializable(err.args) from err
+        except UnableFromDict as err:
+            raise NotDeserializable(err.args) from err
